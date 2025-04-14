@@ -12,7 +12,7 @@ function App() {
           />
         </a>
       </div>
-      <h1>Juancho</h1>
+      <h1>Juancho Velazco</h1>
       <div className="card">
         <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
           <button>count is 0</button>
