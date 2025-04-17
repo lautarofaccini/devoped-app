@@ -1,14 +1,12 @@
 import "./App.css";
 import React, { useState } from "react";
-import { Instagram } from "lucide-react";
 
 const App = () => {
   // Reemplaza con tu información
-  const userName = "Lautaro Faccini";
-  const girlfriendInstagram = "https://www.instagram.com/fio_canisaa/?hl=es";
+  const userName =   "Lautaro Faccini";
 
   // Opciones para el juego de Piedra, Papel o Tijeras
-  const options = ["rock", "paper", "scissors"];
+  const options = ["Piedra", "Papel", "Tijeras"];
   const [userChoice, setUserChoice] = useState(null);
   const [cpuChoice, setCpuChoice] = useState(null);
   const [result, setResult] = useState("");
@@ -20,16 +18,16 @@ const App = () => {
 
     if (choice === cpu) setResult("Empate");
     else if (
-      (choice === "rock" && cpu === "scissors") ||
-      (choice === "paper" && cpu === "rock") ||
-      (choice === "scissors" && cpu === "paper")
+      (choice === "Piedra" && cpu === "Tijeras") ||
+      (choice === "Papel" && cpu === "Piedra") ||
+      (choice === "Tijeras" && cpu === "Papel")
     )
       setResult("¡Ganaste!");
     else setResult("Perdiste");
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex flex-col items-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-white flex flex-col items-center p-6">
       <header className="text-center mb-12">
         {/* Coloca tu foto en public/mi-foto.jpg */}
         <img
@@ -66,18 +64,6 @@ const App = () => {
           </div>
         )}
       </main>
-
-      <footer className="w-full max-w-xs text-center">
-        <p className="mb-2 text-gray-600">Sigue a mi novia en Instagram</p>
-        <a
-          href={`https://instagram.com/${girlfriendInstagram}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center px-4 py-2 bg-pink-500 text-white rounded-full shadow hover:bg-pink-600 transition"
-        >
-          <Instagram className="w-5 h-5 mr-2" /> @fio_canisaa
-        </a>
-      </footer>
     </div>
   );
 };
