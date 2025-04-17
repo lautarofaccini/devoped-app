@@ -10,7 +10,8 @@ export default defineConfig({
   preview: {
     // Lista explícita de hosts permitidos
     allowedHosts: [
-      "faccini-web.online", // tu dominio
+      "faccini-web.online",
+      "www.faccini-web.online",
       "localhost", // mantén siempre localhost
     ],
     // puerto por defecto (4173) o el que tú prefieras
