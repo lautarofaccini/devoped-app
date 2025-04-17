@@ -8,7 +8,12 @@ export default defineConfig({
     port: 3000,
   },
   preview: {
+    // Lista explícita de hosts permitidos
+    allowedHosts: [
+      "faccini-web.online", // tu dominio
+      "localhost", // mantén siempre localhost
+    ],
+    // puerto por defecto (4173) o el que tú prefieras
     port: 3000,
   },
-
 });
