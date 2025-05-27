@@ -40,7 +40,7 @@ const App = () => {
 
       <main className="w-full max-w-xl bg-white rounded-2xl shadow p-8 mb-12">
         <h2 className="text-2xl font-semibold mb-4 text-gray-700">
-          Piedra, Papel o Tijeras
+          Hola Yamil
         </h2>
         <div className="flex justify-around mb-4">
           {options.map((option) => (
