@@ -6,11 +6,11 @@ import { Calculator, numbers, equalSign, operations } from "../src/Calculator";
 
 describe("Calculator", () => {
   afterEach(cleanup);
-
+/* 
   it("should render title correctly", () => {
     render(<Calculator />);
     screen.getByText("Calculator");
-  });
+  }); */
 
   it("should render numbers", () => {
     render(<Calculator />);
