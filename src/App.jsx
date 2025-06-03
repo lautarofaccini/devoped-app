@@ -1,9 +1,10 @@
 import "./App.css";
 import React, { useState } from "react";
+import { Calculator } from "./Calculator";
 
 const App = () => {
   // Reemplaza con tu información
-  const userName =   "Lautaro Faccini";
+  const userName = "Lautaro Faccini";
 
   // Opciones para el juego de Piedra, Papel o Tijeras
   const options = ["Piedra", "Papel", "Tijeras"];
@@ -63,6 +64,8 @@ const App = () => {
             <p className="mt-2 text-2xl font-bold text-indigo-600">{result}</p>
           </div>
         )}
+
+        <Calculator/>
       </main>
     </div>
   );
