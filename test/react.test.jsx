@@ -97,4 +97,22 @@ describe("Calculator", () => {
     const input = screen.getByRole("textbox");
     expect(input.value).toBe("2");
   });
+
+  it("should show user input after showing the results", () => {
+    render(<Calculator />);
+
+    const one = screen.getByText("1");
+    fireEvent.click(one);
+
+    const plus = screen.getByText("+");
+    fireEvent.click(plus);
+    fireEvent.click(one);
+
+    const equal = screen.getByText(equalSign);
+    fireEvent.click(equal);
+    fireEvent.click(one);
+    
+    const input = screen.getByRole("textbox");
+    expect(input.value).toBe("1");
+  });
 });
