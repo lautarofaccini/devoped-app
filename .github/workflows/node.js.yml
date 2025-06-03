@@ -60,11 +60,12 @@ jobs:
 
       - name: Start or Reload application via PM2
         run: |
+          PM2_BIN="/usr/local/bin/pm2"
           # Verifico si existe un proceso pm2 llamado "devoped-app"
-          if pm2 list | grep -q "devoped-app"; then
+          if $PM2_BIN list | grep -q "devoped-app"; then
             echo "PM2 ya tiene un proceso 'devoped-app' corriendo → recargando"
-            pm2 reload devoped-app
+            $PM2_BIN reload devoped-app
           else
             echo "No se encontró 'devoped-app' en PM2 → arrancando por primera vez"
-            pm2 start npm --name devoped-app -- run preview
+            $PM2_BIN start npm --name devoped-app -- run preview
           fi
