@@ -36,10 +36,14 @@ jobs:
           PR_TITLE=$(jq -r '.pull_request.title' < "$GITHUB_EVENT_PATH")
           STORY_ID=$(echo "$PR_TITLE" | grep -o 'sc-[0-9]\+')
 
-          curl -X POST https://api.app.shortcut.com/api/v3/stories/$STORY_ID/comments \
-            -H "Content-Type: application/json" \
-            -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
-            -d "{\"text\": \"❌ Tests failed in CI. Please fix before merging.\"}"
+          if [ -n "$STORY_ID" ]; then
+            curl -X POST https://api.app.shortcut.com/api/v3/stories/$STORY_ID/comments \
+              -H "Content-Type: application/json" \
+              -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
+              -d "{\"text\": \"❌ Tests failed in CI. Please fix before merging.\"}"
+          else
+            echo "No STORY_ID found in commit message, skipping Shortcut message."
+          fi
 
   deploy:
     name: Build & Deploy to Production
@@ -88,7 +92,11 @@ jobs:
           PR_TITLE=$(git log -1 --pretty=%B)
           STORY_ID=$(echo "$PR_TITLE" | grep -o 'sc-[0-9]\+')
 
-          curl -X PUT https://api.app.shortcut.com/api/v3/stories/$STORY_ID \
-            -H "Content-Type: application/json" \
-            -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
-            -d '{"workflow_state_id": 500000010}'
+          if [ -n "$STORY_ID" ]; then
+            curl -X PUT https://api.app.shortcut.com/api/v3/stories/$STORY_ID \
+              -H "Content-Type: application/json" \
+              -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
+              -d '{"workflow_state_id": 500000010}'
+          else
+            echo "No STORY_ID found in commit message, skipping Shortcut update."
+          fi
