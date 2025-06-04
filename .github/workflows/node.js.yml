@@ -33,6 +33,8 @@ jobs:
       - name: Notify Shortcut if tests fail
         if: failure()
         run: |
+          set +e
+
           PR_TITLE=$(jq -r '.pull_request.title' < "$GITHUB_EVENT_PATH")
           STORY_ID=$(echo "$PR_TITLE" | grep -o 'sc-[0-9]\+')
 
@@ -44,6 +46,8 @@ jobs:
           else
             echo "No STORY_ID found in commit message, skipping Shortcut message."
           fi
+
+          exit 0
 
   deploy:
     name: Build & Deploy to Production
@@ -89,32 +93,17 @@ jobs:
 
       - name: Move Story to Done in Shortcut
         run: |
-          set +e  # Desactivamos 'exit on error' para evitar abortos silenciosos
+          set +e
 
-          echo "Obteniendo último mensaje de commit..."
           COMMIT_MSG=$(git log -1 --pretty=%B)
-          echo "Último commit: $COMMIT_MSG"
-
           STORY_ID=$(echo "$COMMIT_MSG" | grep -o 'sc-[0-9]\+')
-          echo "ID de historia encontrado: $STORY_ID"
 
           if [ -n "$STORY_ID" ]; then
-            echo "Actualizando estado en Shortcut..."
-            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            curl -s -o /dev/null -w "%{http_code}" \
               -X PUT https://api.app.shortcut.com/api/v3/stories/$STORY_ID \
               -H "Content-Type: application/json" \
               -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
-              -d '{"workflow_state_id": 500000010}')
-
-            echo "Respuesta HTTP de Shortcut: $RESPONSE"
-
-            if [ "$RESPONSE" -ge 200 ] && [ "$RESPONSE" -lt 300 ]; then
-              echo "✅ Historia actualizada correctamente."
-            else
-              echo "⚠️ Error al actualizar la historia en Shortcut (HTTP $RESPONSE)."
-            fi
-          else
-            echo "⚠️ No se encontró ningún ID de historia (sc-XXX) en el commit."
+              -d '{"workflow_state_id": 500000010}'
           fi
 
           exit 0
