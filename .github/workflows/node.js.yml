@@ -30,6 +30,17 @@ jobs:
       - name: Run Vitest
         run: npm test
 
+      - name: Notify Shortcut if tests fail
+        if: failure()
+        run: |
+          PR_TITLE=$(jq -r '.pull_request.title' < "$GITHUB_EVENT_PATH")
+          STORY_ID=$(echo "$PR_TITLE" | grep -o 'sc-[0-9]\+')
+
+          curl -X POST https://api.app.shortcut.com/api/v3/stories/$STORY_ID/comments \
+            -H "Content-Type: application/json" \
+            -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
+            -d "{\"text\": \"❌ Tests failed in CI. Please fix before merging.\"}"
+
   deploy:
     name: Build & Deploy to Production
     runs-on: self-hosted
@@ -71,3 +82,13 @@ jobs:
             pm2 start /home/devoper/.nvm/versions/node/v22.14.0/bin/serve \
             --name devoped-app -- -s /var/www/devoped-app -l 3000
           fi
+
+      - name: Move Story to Done in Shortcut
+        run: |
+          PR_TITLE=$(git log -1 --pretty=%B)
+          STORY_ID=$(echo "$PR_TITLE" | grep -o 'sc-[0-9]\+')
+
+          curl -X PUT https://api.app.shortcut.com/api/v3/stories/$STORY_ID \
+            -H "Content-Type: application/json" \
+            -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
+            -d '{"workflow_state_id": 500000010}'
