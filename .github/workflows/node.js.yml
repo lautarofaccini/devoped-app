@@ -116,7 +116,7 @@ jobs:
            | grep -Eo '[0-9]+' \
            | head -n1)
 
-          echo "ID de historia encontrado en commit: $STORY_ID"
+          echo "ID de historia encontrado en commit, vemos: $STORY_ID"
           if [ -n "$STORY_ID" ]; then
             curl -s -o /dev/null -w "%{http_code}" \
               -X PUT https://api.app.shortcut.com/api/v3/stories/$STORY_ID \
