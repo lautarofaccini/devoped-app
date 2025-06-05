@@ -111,13 +111,16 @@ jobs:
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B)
           echo "Mensaje del último commit en main: $COMMIT_MSG"
-          STORY_ID=$(echo "$COMMIT_MSG" | grep -Eo '\b[0-9]+\b' | head -n1)
+          STORY_ID=$(echo "$COMMIT_MSG" \
+           | grep -Eo 'sc-([0-9]+)' \
+           | grep -Eo '[0-9]+' \
+           | head -n1)
+
           echo "ID de historia encontrado en commit: $STORY_ID"
-          if [ -z "$STORY_ID" ]; then
-            echo "No se encontró ID de historia en el commit de merge. Saltando notificación."
-            exit 0
-          fi
-          echo "Enviando mensaje de despliegue exitoso para historia $STORY_ID..."
-          curl -X POST -H "Content-Type: application/json" -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
-               -d "{ \"text\": \"✅ La historia #$STORY_ID ha pasado los tests y fue mergeada en la rama main con éxito.\" }" \
-               "https://api.app.shortcut.com/api/v3/stories/$STORY_ID/comments"
+          if [ -n "$STORY_ID" ]; then
+            curl -s -o /dev/null -w "%{http_code}" \
+              -X PUT https://api.app.shortcut.com/api/v3/stories/$STORY_ID \
+              -H "Content-Type: application/json" \
+              -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
+              -d '{"workflow_state_id": 500000010}'
+          fisc
