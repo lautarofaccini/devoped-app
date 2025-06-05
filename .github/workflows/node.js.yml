@@ -28,26 +28,39 @@ jobs:
         run: npm install
 
       - name: Run Vitest
+        id: vitest
         run: npm test
 
-      - name: Notify Shortcut if tests fail
-        if: failure()
+      # NUEVO: Notificar a Shortcut tras tests
+      - name: Notify Shortcut of test result   # NOTIFICAR SHORTCUT
+        if: ${{ always() }}
+        env:
+          SHORTCUT_API_TOKEN: ${{ secrets.SHORTCUT_API_TOKEN }}
+          # Pasamos el nombre de la rama del PR
+          BRANCH_NAME: ${{ github.head_ref }}
+          # Resultado del paso de tests (success/failure)
+          RESULT: ${{ steps.vitest.outcome }}
+        continue-on-error: true   # No provocar fallo de pipeline si falla este paso
         run: |
-          set +e
-
-          PR_TITLE=$(jq -r '.pull_request.title' < "$GITHUB_EVENT_PATH")
-          STORY_ID=$(echo "$PR_TITLE" | grep -o 'sc-[0-9]\+')
-
-          if [ -n "$STORY_ID" ]; then
-            curl -X POST https://api.app.shortcut.com/api/v3/stories/$STORY_ID/comments \
-              -H "Content-Type: application/json" \
-              -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
-              -d "{\"text\": \"❌ Tests failed in CI. Please fix before merging.\"}"
-          else
-            echo "No STORY_ID found in commit message, skipping Shortcut message."
+          echo "Resultado de Vitest: $RESULT"
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Mensaje del último commit: $COMMIT_MSG"
+          echo "Nombre de rama (PR): $BRANCH_NAME"
+          # Buscar número en rama o commit como posible ID de historia
+          STORY_ID=$(echo "$BRANCH_NAME $COMMIT_MSG" | grep -Eo '\b[0-9]+\b' | head -n1)
+          echo "ID de historia encontrado: $STORY_ID"
+          if [ -z "$STORY_ID" ]; then
+            echo "No se encontró ID de historia en la rama o commit. Saltando notificación."
+            exit 0
           fi
-
-          exit 0
+          if [ "$RESULT" = "failure" ]; then
+            echo "Tests fallaron. Enviando mensaje a la historia $STORY_ID..."
+            curl -X POST -H "Content-Type: application/json" -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
+                 -d "{ \"text\": \"⚠️ Los tests han fallado para esta historia (branch: $BRANCH_NAME). Revisa los detalles del CI.\" }" \
+                 "https://api.app.shortcut.com/api/v3/stories/$STORY_ID/comments"
+          else
+            echo "Los tests pasaron correctamente. No se envía notificación a Shortcut."
+          fi
 
   deploy:
     name: Build & Deploy to Production
@@ -80,30 +93,31 @@ jobs:
       - name: Start or Reload application via PM2
         run: |
           cd /var/www/devoped-app
-
-          # Ahora inicio o recargo el preview dentro de /var/www/devoped-app
           if pm2 list | grep -q "devoped-app"; then
             echo "Recargando PM2 devoped-app"
             pm2 reload devoped-app
           else
             echo "No se encontró 'devoped-app' en PM2 → arrancando serve"
             pm2 start /home/devoper/.nvm/versions/node/v22.14.0/bin/serve \
-            --name devoped-app -- -s /var/www/devoped-app -l 3000
+              --name devoped-app -- -s /var/www/devoped-app -l 3000
           fi
 
-      - name: Move Story to Done in Shortcut
+      # NUEVO: Notificar a Shortcut tras despliegue exitoso
+      - name: Notify Shortcut of deployment   # NOTIFICAR SHORTCUT
+        if: ${{ always() }}
+        env:
+          SHORTCUT_API_TOKEN: ${{ secrets.SHORTCUT_API_TOKEN }}
+        continue-on-error: true
         run: |
-          set +e
-
           COMMIT_MSG=$(git log -1 --pretty=%B)
-          STORY_ID=$(echo "$COMMIT_MSG" | grep -o 'sc-[0-9]\+')
-
-          if [ -n "$STORY_ID" ]; then
-            curl -s -o /dev/null -w "%{http_code}" \
-              -X PUT https://api.app.shortcut.com/api/v3/stories/$STORY_ID \
-              -H "Content-Type: application/json" \
-              -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
-              -d '{"workflow_state_id": 500000010}'
+          echo "Mensaje del último commit en main: $COMMIT_MSG"
+          STORY_ID=$(echo "$COMMIT_MSG" | grep -Eo '\b[0-9]+\b' | head -n1)
+          echo "ID de historia encontrado en commit: $STORY_ID"
+          if [ -z "$STORY_ID" ]; then
+            echo "No se encontró ID de historia en el commit de merge. Saltando notificación."
+            exit 0
           fi
-
-          exit 0
+          echo "Enviando mensaje de despliegue exitoso para historia $STORY_ID..."
+          curl -X POST -H "Content-Type: application/json" -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
+               -d "{ \"text\": \"✅ La historia #$STORY_ID ha pasado los tests y fue mergeada en la rama main con éxito.\" }" \
+               "https://api.app.shortcut.com/api/v3/stories/$STORY_ID/comments"
