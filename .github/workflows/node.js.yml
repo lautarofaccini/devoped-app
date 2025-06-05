@@ -123,4 +123,4 @@ jobs:
               -H "Content-Type: application/json" \
               -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
               -d '{"workflow_state_id": 500000010}'
-          fisc
+          fi
