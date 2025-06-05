@@ -31,18 +31,11 @@ jobs:
         id: vitest
         run: npm test
 
-      - name: Verificar últimos 5 dígitos del SHORTCUT_API_TOKEN
-        env:
-          SHORTCUT_API_TOKEN: ${{ secrets.SHORTCUT_API_TOKEN }}
-        run: |
-          echo "✅ SHORTCUT_API_TOKEN está definida."
-          echo -n "🔒 Últimos 5 caracteres del token: "
-          echo "${SHORTCUT_API_TOKEN: -5}"
-
       # NUEVO: Notificar a Shortcut tras tests
       - name: Notify Shortcut of test result   # NOTIFICAR SHORTCUT
         if: ${{ always() }}
         env:
+          SHORTCUT_API_TOKEN: ${{ secrets.SHORTCUT_API_TOKEN }}
           # Pasamos el nombre de la rama del PR
           BRANCH_NAME: ${{ github.head_ref }}
           # Resultado del paso de tests (success/failure)
@@ -112,6 +105,8 @@ jobs:
       # NUEVO: Notificar a Shortcut tras despliegue exitoso
       - name: Notify Shortcut of deployment   # NOTIFICAR SHORTCUT
         if: ${{ always() }}
+        env:
+          SHORTCUT_API_TOKEN: ${{ secrets.SHORTCUT_API_TOKEN }}
         continue-on-error: true
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B)
