@@ -32,6 +32,8 @@ jobs:
         run: npm test
 
       - name: Verificar últimos 5 dígitos del SHORTCUT_API_TOKEN
+        env:
+          SHORTCUT_API_TOKEN: ${{ secrets.SHORTCUT_API_TOKEN }}
         run: |
           echo "✅ SHORTCUT_API_TOKEN está definida."
           echo -n "🔒 Últimos 5 caracteres del token: "
