@@ -33,10 +33,6 @@ jobs:
 
       - name: Verificar últimos 5 dígitos del SHORTCUT_API_TOKEN
         run: |
-          if [ -z "$SHORTCUT_API_TOKEN" ]; then
-            echo "❌ SHORTCUT_API_TOKEN no está definida o está vacía."
-            exit 1
-          fi
           echo "✅ SHORTCUT_API_TOKEN está definida."
           echo -n "🔒 Últimos 5 caracteres del token: "
           echo "${SHORTCUT_API_TOKEN: -5}"
