@@ -4,7 +4,7 @@ import { Calculator } from "./Calculator";
 
 const App = () => {
   // Reemplaza con tu información
-  const userName = "Lautaro Faccini";
+  const userName = "Lautaro Faccini S";
 
   // Opciones para el juego de Piedra, Papel o Tijeras
   const options = ["Piedra", "Papel", "Tijeras"];
