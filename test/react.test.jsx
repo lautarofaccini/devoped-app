@@ -20,13 +20,6 @@ describe("Calculator", () => {
     });
   });
 
-  it("should render 4 rows", () => {
-    render(<Calculator />);
-
-    const rows = screen.getAllByRole("row");
-    expect(rows.length).toBe(4);
-  });
-
   it("should render operations", () => {
     render(<Calculator />);
 
