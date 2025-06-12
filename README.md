@@ -109,6 +109,4 @@ Para vincular commits y ramas con historias de usuario en Shortcut, utilizamos e
 
 ## 🌀 Pipeline de CI
 
-```markdown
 ![CI Pipeline](docs/ci-pipeline.png)
-```
