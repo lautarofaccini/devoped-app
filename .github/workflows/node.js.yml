@@ -22,17 +22,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Run Vitest
+      - name: Run Tests and Coverage
         id: vitest
-        run: npm test
+        run: npm run coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage/lcov.info
 
       # NUEVO: Notificar a Shortcut tras tests
-      - name: Notify Shortcut of test result   # NOTIFICAR SHORTCUT
+      - name: Notify Shortcut of test result
         if: ${{ always() }}
         env:
           SHORTCUT_API_TOKEN: ${{ secrets.SHORTCUT_API_TOKEN }}
@@ -44,28 +50,53 @@ jobs:
         run: |
           echo "Resultado de Vitest: $RESULT"
           COMMIT_MSG=$(git log -1 --pretty=%B)
-          echo "Mensaje del último commit: $COMMIT_MSG"
-          echo "Nombre de rama (PR): $BRANCH_NAME"
-          # Buscar número en rama o commit como posible ID de historia
           STORY_ID=$(echo "$BRANCH_NAME $COMMIT_MSG" | grep -Eo '\b[0-9]+\b' | head -n1)
-          echo "ID de historia encontrado: $STORY_ID"
           if [ -z "$STORY_ID" ]; then
-            echo "No se encontró ID de historia en la rama o commit. Saltando notificación."
+            echo "No se encontró ID de historia. Saltando notificación."
             exit 0
           fi
           if [ "$RESULT" = "failure" ]; then
-            echo "Tests fallaron. Enviando mensaje a la historia $STORY_ID..."
             curl -X POST -H "Content-Type: application/json" -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
-                 -d "{ \"text\": \"⚠️ Los tests han fallado para esta historia (branch: $BRANCH_NAME). Revisa los detalles del CI.\" }" \
+                 -d "{\"text\": \"⚠️ Los tests han fallado para la historia $STORY_ID (branch: $BRANCH_NAME).\"}" \
                  "https://api.app.shortcut.com/api/v3/stories/$STORY_ID/comments"
           else
             echo "Los tests pasaron correctamente. No se envía notificación a Shortcut."
           fi
 
+  sonar:
+    name: SonarQube Scan
+    runs-on: self-hosted
+    needs: test
+    container:
+      image: sonarsource/sonar-scanner-cli:latest
+    env:
+      SONAR_API_TOKEN: ${{ secrets.SONAR_API_TOKEN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage/
+
+      - name: Install dependencies (for TS/JS parsing)
+        run: npm ci
+
+      - name: SonarQube analysis
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=devoped-app \
+            -Dsonar.sources=src \
+            -Dsonar.login=$SONAR_API_TOKEN \
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+
   deploy:
     name: Build & Deploy to Production
     runs-on: self-hosted
-    needs: test
+    needs: [test, sonar]
     if: github.event_name == 'push'
     strategy:
       matrix:
@@ -79,10 +110,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build for production
         run: npm run build
@@ -97,7 +128,7 @@ jobs:
             echo "Recargando PM2 devoped-app"
             pm2 reload devoped-app
           else
-            echo "No se encontró 'devoped-app' en PM2 → arrancando serve"
+            echo "Arrancando PM2 devoped-app"
             pm2 start /home/devoper/.nvm/versions/node/v22.14.0/bin/serve \
               --name devoped-app -- -s /var/www/devoped-app -l 3000
           fi
@@ -110,13 +141,7 @@ jobs:
         continue-on-error: true
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B)
-          echo "Mensaje del último commit en main: $COMMIT_MSG"
-          STORY_ID=$(echo "$COMMIT_MSG" \
-           | grep -Eo 'sc-([0-9]+)' \
-           | grep -Eo '[0-9]+' \
-           | head -n1)
-
-          echo "ID de historia encontrado en commit: $STORY_ID"
+          STORY_ID=$(echo "$COMMIT_MSG" | grep -Eo 'sc-([0-9]+)' | grep -Eo '[0-9]+' | head -n1)
           if [ -n "$STORY_ID" ]; then
             curl -s -o /dev/null -w "%{http_code}" \
               -X PUT https://api.app.shortcut.com/api/v3/stories/$STORY_ID \

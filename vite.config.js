@@ -7,6 +7,11 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: { // <--- config de vitest
     environment: "happy-dom",
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "lcov"],
+      reportsDirectory: "coverage",
+    },
   },
   server: {
     port: 3000,
