@@ -124,3 +124,26 @@ jobs:
               -H "Shortcut-Token: $SHORTCUT_API_TOKEN" \
               -d '{"workflow_state_id": 500000010}'
           fi
+        
+      - name: Send deployment success email
+        if: ${{ success() }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}      # ej. smtp.gmail.com
+          server_port: ${{ secrets.SMTP_PORT }}           # ej. 587
+          username:      ${{ secrets.SMTP_USER }}         # tu usuario SMTP
+          password:      ${{ secrets.SMTP_PASS }}         # tu pass/app-password
+          subject:       "✅ Despliegue OK: devoped-app"
+          body:          |
+                           ¡Hola equipo!
+                           
+                           El despliegue en producción se ha completado con éxito.
+                           
+                           • Commit: ${{ github.sha }}  
+                           • Branch: ${{ github.ref_name }}  
+                           • Fecha: ${{ github.event.head_commit.timestamp }}
+                           
+                           Saludos,
+                           GitHub Actions CI
+          to:            "lautarofaccini@gmail.com"
+          from:          "ci@faccini-web.online"
